@@ -1,0 +1,59 @@
+version: '3.9'
+networks:
+  django:
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.70.0/24
+
+services:
+  web:
+    container_name: djangoweb
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/opt/app
+    ports:
+      - "8020:8020"
+    environment:
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    depends_on:
+      - db
+    networks:
+      django:
+        ipv4_address: 192.168.70.5
+
+  db:
+    container_name: postgres
+    image: postgres:13-alpine
+    tty: true
+    restart: unless-stopped
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      django:
+        ipv4_address: 192.168.70.6
+
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4
+    tty: true
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: postgres
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - ./pgadmin:/var/lib/pgadmin
+    ports:
+      - "8080:80"
+    networks:
+      django:
+        ipv4_address: 192.168.70.7
+    restart: unless-stopped
